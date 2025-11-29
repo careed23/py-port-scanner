@@ -11,3 +11,4 @@ It uses **threading** to scan multiple ports simultaneously, significantly reduc
 `python3 scanner.py <target_ip>`
 Example: `python3 scanner.py 45.33.32.156`
 
+# PyScan---A-Multi-Threaded-Port-Scanner
