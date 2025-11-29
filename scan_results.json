@@ -1,0 +1,36 @@
+{
+    "target": "192.168.1.50 (Simulated Threat)",
+    "scan_time": "2025-11-29 17:15:00",
+    "results": [
+        {
+            "port": 21,
+            "service": "ftp",
+            "status": "OPEN",
+            "timestamp": "2025-11-29 17:14:55"
+        },
+        {
+            "port": 22,
+            "service": "ssh",
+            "status": "OPEN",
+            "timestamp": "2025-11-29 17:14:56"
+        },
+        {
+            "port": 80,
+            "service": "http",
+            "status": "OPEN",
+            "timestamp": "2025-11-29 17:14:58"
+        },
+        {
+            "port": 443,
+            "service": "https",
+            "status": "OPEN",
+            "timestamp": "2025-11-29 17:14:59"
+        },
+        {
+            "port": 3306,
+            "service": "mysql",
+            "status": "OPEN",
+            "timestamp": "2025-11-29 17:15:00"
+        }
+    ]
+}

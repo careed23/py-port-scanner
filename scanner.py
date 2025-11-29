@@ -1,6 +1,6 @@
-import socket
 import threading
 import sys
+import json
 from datetime import datetime
 from queue import Queue
 
@@ -10,13 +10,9 @@ queue = Queue()
 open_ports = []
 
 def port_scan(port):
-    """
-    Tries to connect to a specific port. 
-    If successful, returns True.
-    """
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(1) # Don't wait forever
+        s.settimeout(1)
         result = s.connect_ex((target, port))
         if result == 0:
             return True
@@ -26,49 +22,62 @@ def port_scan(port):
     return False
 
 def worker():
-    """
-    Worker thread that pulls ports from the queue and scans them.
-    """
     while not queue.empty():
         port = queue.get()
         if port_scan(port):
-            print(f"[+] Port {port} is OPEN")
-            open_ports.append(port)
+            # Resolve service name (e.g., 80 -> http) if possible
+            try:
+                service = socket.getservbyport(port, 'tcp')
+            except:
+                service = "Unknown"
+            
+            print(f"[+] Port {port} is OPEN ({service})")
+            
+            # Add to our list for the database
+            open_ports.append({
+                "port": port,
+                "service": service,
+                "status": "OPEN",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            })
         queue.task_done()
 
 def run_scanner(target_ip, start_port=1, end_port=1024):
     global target
     target = target_ip
     
-    print(f"Scanning target: {target}")
-    print(f"Time started: {datetime.now()}")
-    print("-" * 50)
-
-    # 1. Fill the queue with ports
+    print(f"Scanning target: {target}...")
+    
     for port in range(start_port, end_port + 1):
         queue.put(port)
 
-    # 2. Create threads (The Speed Boost)
-    # We create 100 'workers' to do the job at the same time
     thread_list = []
     for _ in range(100):
         thread = threading.Thread(target=worker)
         thread_list.append(thread)
         
-    # 3. Start threads
     for thread in thread_list:
         thread.start()
         
-    # 4. Wait for all threads to finish
     for thread in thread_list:
         thread.join()
         
-    print("-" * 50)
-    print(f"Scan completed. Open ports: {sorted(open_ports)}")
+    # --- SAVE TO DATABASE (JSON) ---
+    print("Saving results to database...")
+    data = {
+        "target": target,
+        "scan_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "results": sorted(open_ports, key=lambda x: x['port'])
+    }
+    
+    with open("scan_results.json", "w") as f:
+        json.dump(data, f, indent=4)
+        
+    print("✅ Scan Complete. Data saved to 'scan_results.json'")
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
         target = sys.argv[1]
         run_scanner(target)
     else:
-        print("Syntax Error! Usage: python3 scanner.py <ip_address>")
+        print("Usage: python3 scanner.py <ip_address>")
